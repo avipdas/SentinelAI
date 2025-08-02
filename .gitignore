@@ -1,1 +1,7 @@
+# Terraform local state
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# Terraform zip archives
 terraform*.zip
