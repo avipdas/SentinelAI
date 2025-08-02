@@ -11,12 +11,13 @@ services:
       - "3000:3000"
 
   ingest:
-    image: golang:1.21
-    working_dir: /app
-    volumes:
-      - ./apps/cli:/app
-    command: sh -c "go run main.go"
-
+    build: ./apps/cli
+    container_name: sentinelai-ingest
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+      - db
   ml:
     image: python:3.11
     working_dir: /app

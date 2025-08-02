@@ -5,3 +5,30 @@
 
 # Terraform zip archives
 terraform*.zip
+
+# Ignore Docker and build artifacts
+*.log
+*.out
+*.exe
+*.o
+*.a
+
+# Go cache
+/apps/cli/go.sum
+/apps/cli/ingest
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Node modules
+node_modules/
+
+# Terraform cache
+infra/.terraform/
+terraform*.zip
+
+# VSCode and IDE
+.vscode/
+.idea/
+
