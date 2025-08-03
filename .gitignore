@@ -1,34 +1,43 @@
-# Terraform local state
+# -------------------------
+# Terraform
 .terraform/
 *.tfstate
 *.tfstate.backup
-
-# Terraform zip archives
 terraform*.zip
 
-# Ignore Docker and build artifacts
+# Docker & Build Artifacts
 *.log
 *.out
 *.exe
 *.o
 *.a
 
-# Go cache
+# Go
 /apps/cli/go.sum
 /apps/cli/ingest
 
-# Python cache
+# Python
 __pycache__/
 *.pyc
+venv/
+.env
 
-# Node modules
+# Node.js
 node_modules/
+build/
 
-# Terraform cache
-infra/.terraform/
-terraform*.zip
+# Database (don’t push local DBs)
+*.sqlite3
+*.db
 
-# VSCode and IDE
+# PostgreSQL dump files
+*.sql
+*.dump
+
+# IDEs & Editors
 .vscode/
 .idea/
 
+# OS files
+.DS_Store
+Thumbs.db
