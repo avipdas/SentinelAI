@@ -4,6 +4,7 @@ import psycopg2
 import pandas as pd
 from sklearn.ensemble import IsolationForest
 import uvicorn
+import os
 
 app = FastAPI()
 
@@ -17,24 +18,28 @@ app.add_middleware(
 )
 
 DB_CONFIG = {
-    "dbname": "sentinelai",
-    "user": "postgres",
-    "password": "sentinel123",
-    "host": "127.0.0.1",
-    "port": "5433"
+    "dbname": os.getenv("DB_NAME", "sentinelai"),
+    "user": os.getenv("DB_USER", "sentinel"),
+    "password": os.getenv("DB_PASS", "sentinel123"),
+    "host": os.getenv("DB_HOST", "db"),   # ✅ use docker service name
+    "port": os.getenv("DB_PORT", "5432")  # ✅ match docker-compose
 }
 
 @app.get("/analyze")
 def analyze():
     try:
         conn = psycopg2.connect(**DB_CONFIG)
-        df = pd.read_sql("SELECT * FROM logs ORDER BY timestamp DESC LIMIT 100;", conn)
+        df = pd.read_sql(
+            "SELECT id, message, timestamp FROM logs ORDER BY timestamp DESC LIMIT 100;", 
+            conn
+        )
     except Exception as e:
-        return {"error": str(e)}
+        # Always return an array so React doesn't break
+        return []
 
     if df.empty:
         conn.close()
-        return {"status": "no logs"}
+        return []
 
     df['msg_len'] = df['message'].apply(len)
 
@@ -68,7 +73,7 @@ def get_anomalies():
         cur.close()
         conn.close()
     except Exception as e:
-        return {"error": str(e)}
+        return []
 
     return [
         {"id": r[0], "message": r[1], "timestamp": r[2], "anomaly": r[3]}

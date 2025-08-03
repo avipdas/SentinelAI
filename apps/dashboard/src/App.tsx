@@ -11,17 +11,30 @@ interface LogEntry {
 function App() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     axios
-      .get<LogEntry[]>("http://localhost:8001/analyze")
+      .get("http://localhost:8001/analyze")
       .then((res) => {
-        console.log("Logs fetched:", res.data); // ✅ Debug line
-        setLogs(res.data);
-        setLoading(false);
+        console.log("Logs fetched:", res.data);
+
+        if (Array.isArray(res.data)) {
+          setLogs(res.data);
+        } else if (res.data && Array.isArray(res.data.logs)) {
+          setLogs(res.data.logs);
+        } else {
+          console.error("Unexpected response:", res.data);
+          setError("Unexpected response from server");
+          setLogs([]);
+        }
       })
       .catch((err) => {
         console.error("Error fetching logs:", err);
+        setError("Failed to fetch logs");
+        setLogs([]);
+      })
+      .finally(() => {
         setLoading(false);
       });
   }, []);
@@ -31,6 +44,8 @@ function App() {
       <h1>SentinelAI Dashboard</h1>
       {loading ? (
         <p>Loading logs...</p>
+      ) : error ? (
+        <p style={{ color: "red" }}>{error}</p>
       ) : logs.length === 0 ? (
         <p>No logs found.</p>
       ) : (
