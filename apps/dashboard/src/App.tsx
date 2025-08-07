@@ -1,52 +1,58 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 
 interface LogEntry {
   id: number;
   message: string;
   timestamp: string;
-  anomaly: number; // -1 = Suspicious, 1 = Normal
+  anomaly: boolean;
+  explanation?: string; // new field
 }
 
 function App() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    axios
-      .get("http://localhost:8001/analyze")
-      .then((res) => {
-        console.log("Logs fetched:", res.data);
+    const socket = new WebSocket("ws://localhost:8001/ws/logs");
 
-        if (Array.isArray(res.data)) {
-          setLogs(res.data);
-        } else if (res.data && Array.isArray(res.data.logs)) {
-          setLogs(res.data.logs);
+    socket.onopen = () => {
+      console.log("✅ WebSocket connected");
+      setError(null);
+    };
+
+    socket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (Array.isArray(data)) {
+          setLogs(data);
         } else {
-          console.error("Unexpected response:", res.data);
-          setError("Unexpected response from server");
-          setLogs([]);
+          setError("Unexpected data format from server");
         }
-      })
-      .catch((err) => {
-        console.error("Error fetching logs:", err);
-        setError("Failed to fetch logs");
-        setLogs([]);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+      } catch (err) {
+        console.error("Failed to parse WebSocket message:", err);
+      }
+    };
+
+    socket.onerror = () => {
+      console.error("WebSocket error");
+      setError("WebSocket connection failed.");
+    };
+
+    socket.onclose = () => {
+      console.warn("WebSocket closed");
+      setError("WebSocket connection closed.");
+    };
+
+    return () => {
+      socket.close();
+    };
   }, []);
 
   return (
     <div style={{ padding: "20px" }}>
-      <h1>SentinelAI Dashboard</h1>
-      {loading ? (
-        <p>Loading logs...</p>
-      ) : error ? (
-        <p style={{ color: "red" }}>{error}</p>
-      ) : logs.length === 0 ? (
+      <h1>SentinelAI Dashboard (Live)</h1>
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      {logs.length === 0 ? (
         <p>No logs found.</p>
       ) : (
         <table border={1} cellPadding={10}>
@@ -55,23 +61,23 @@ function App() {
               <th>ID</th>
               <th>Message</th>
               <th>Timestamp</th>
-              <th>Anomaly</th>
+              <th>Status</th>
+              <th>Explanation</th>
             </tr>
           </thead>
           <tbody>
             {logs.map((log) => (
               <tr
                 key={log.id}
-                style={{
-                  backgroundColor: log.anomaly === -1 ? "#ffcccc" : "#ccffcc",
-                }}
+                style={{ backgroundColor: log.anomaly ? "#ffcccc" : "#ccffcc" }}
               >
                 <td>{log.id}</td>
                 <td>{log.message}</td>
                 <td>{new Date(log.timestamp).toLocaleString()}</td>
-                <td style={{ color: log.anomaly === -1 ? "red" : "green" }}>
-                  {log.anomaly === -1 ? "Suspicious" : "Normal"}
+                <td style={{ color: log.anomaly ? "red" : "green" }}>
+                  {log.anomaly ? "Suspicious" : "Normal"}
                 </td>
+                <td>{log.explanation || "N/A"}</td>
               </tr>
             ))}
           </tbody>
