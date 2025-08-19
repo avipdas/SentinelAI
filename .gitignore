@@ -43,3 +43,5 @@ build/
 Thumbs.db
 
 .env
+apps/ingest/server
+*.broken
