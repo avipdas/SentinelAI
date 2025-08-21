@@ -280,7 +280,7 @@ Pull requests welcome! For major changes, please open an issue first to discuss 
 
 ## 📜 License
 
-MIT License © 2025 [Your Name]
+MIT License © 2025 Avi Das
 
 ---
 
